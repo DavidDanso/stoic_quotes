@@ -8,5 +8,5 @@ from .serializers import QuoteSerializer
 def get_quotes(request):
     quotes = Quote.objects.all()
     serializer = QuoteSerializer(quotes, many=True)
-    data = {"quotes": [{"quote": quote} for quote in serializer.data]}
+    data = {"quotes": [quote for quote in serializer.data]}
     return Response(data)
