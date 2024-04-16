@@ -10,3 +10,10 @@ def get_quotes(request):
     serializer = QuoteSerializer(quotes, many=True)
     data = {"quotes": [quote for quote in serializer.data]}
     return Response(data)
+
+
+@api_view(['GET'])
+def random_quotes(request):
+    quote = Quote.objects.all().order_by('?').first()
+    serializer = QuoteSerializer(quote)
+    return Response(serializer.data)
