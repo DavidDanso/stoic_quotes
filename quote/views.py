@@ -1,5 +1,7 @@
+from django.http import Http404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
 from .models import Quote
 from .serializers import QuoteSerializer
 
@@ -23,19 +25,18 @@ def random_quotes(request):
 # endpoint to search quote for author or category
 @api_view(['GET'])
 def search_quotes(request):
-    author = request.query_params.get('author')
-    category = request.query_params.get('category')
-
-    if not author and not category:
-        return Response({"error": "Please provide either an author name or a category in the query parameters."}, status=400)
-    
     quotes = Quote.objects.all()
-
+    category = request.GET.get('category')
+    author = request.GET.get('author')
+    
     if author:
         quotes = quotes.filter(author__icontains=author)
 
     if category:
         quotes = quotes.filter(category__icontains=category)
+
+    if not quotes.exists():  # Check if any quotes match the filters
+        return Response({'message': 'No quotes found for the given author and/or category.'}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = QuoteSerializer(quotes, many=True)
     data = {"quotes": serializer.data}
