@@ -1,43 +1,73 @@
-from django.http import Http404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Quote
 from .serializers import QuoteSerializer
 
-# endpoint to get all quotes
+# Endpoint to get all quotes
 @api_view(['GET'])
 def get_quotes(request):
-    quotes = Quote.objects.all()
-    serializer = QuoteSerializer(quotes, many=True)
-    data = {"quotes": [quote for quote in serializer.data]}
-    return Response(data)
+    try:
+        # Retrieve all quotes from the database
+        quotes = Quote.objects.all()
+        # Serialize the quotes
+        serializer = QuoteSerializer(quotes, many=True)
+        # Prepare response data
+        data = {"quotes": serializer.data}
+        # Return response with quotes
+        return Response(data)
+    except Exception as e:
+        # Return error response if any exception occurs
+        return Response({'error message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-# endpoint to get random quote
+# Endpoint to get a random quote
 @api_view(['GET'])
 def random_quotes(request):
-    quote = Quote.objects.all().order_by('?').first()
-    serializer = QuoteSerializer(quote)
-    return Response(serializer.data)
+    try:
+        # Retrieve a random quote from the database
+        quote = Quote.objects.all().order_by('?').first()
+        # Serialize the random quote
+        serializer = QuoteSerializer(quote)
+        # Return response with the random quote
+        return Response(serializer.data)
+    except Exception as e:
+        # Return error response if any exception occurs
+        return Response({'error message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-# endpoint to search quote for author or category
+# Endpoint to search quotes by author, category, or content
 @api_view(['GET'])
 def search_quotes(request):
-    quotes = Quote.objects.all()
-    category = request.GET.get('category')
-    author = request.GET.get('author')
-    
-    if author:
-        quotes = quotes.filter(author__icontains=author)
-
-    if category:
-        quotes = quotes.filter(category__icontains=category)
-
-    if not quotes.exists():  # Check if any quotes match the filters
-        return Response({'message': 'No quotes found for the given author and/or category.'}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = QuoteSerializer(quotes, many=True)
-    data = {"quotes": serializer.data}
-    return Response(data)
+    try:
+        # Retrieve all quotes initially
+        quotes = Quote.objects.all()
+        
+        # Get query parameters
+        category = request.GET.get('category')
+        author = request.GET.get('author')
+        quote_content = request.GET.get('quote')
+        
+        # Validate query parameters
+        if not (author or category or quote_content):
+            return Response({'error message': 'Missing search query parameter'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Filter quotes by content, author, and category
+        if quote_content:
+            quotes = quotes.filter(quote__icontains=quote_content)
+        if author:
+            quotes = quotes.filter(author__icontains=author)
+        if category:
+            quotes = quotes.filter(category__icontains=category)
+        
+        # Check if any quotes match the filters
+        if not quotes.exists():
+            return Response({'message': 'No quotes found for the given search.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Serialize the filtered quotes
+        serializer = QuoteSerializer(quotes, many=True)
+        # Prepare response data
+        data = {"quotes": serializer.data}
+        # Return response with filtered quotes
+        return Response(data)
+    except Exception as e:
+        # Return error response if any exception occurs
+        return Response({'error message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
