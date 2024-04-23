@@ -1,8 +1,15 @@
 from rest_framework.decorators import api_view
+from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Quote
 from .serializers import QuoteSerializer
+
+
+class QuoteCreateView(CreateAPIView):
+    serializer_class = QuoteSerializer
+    queryset = Quote.objects.all()
+
 
 # Endpoint to get all quotes
 @api_view(['GET'])
@@ -20,6 +27,7 @@ def get_quotes(request):
         # Return error response if any exception occurs
         return Response({'error message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 # Endpoint to get a random quote
 @api_view(['GET'])
 def random_quotes(request):
@@ -34,7 +42,8 @@ def random_quotes(request):
         # Return error response if any exception occurs
         return Response({'error message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# Endpoint to search quotes by author, category, or content
+
+# Endpoint to search quotes by author, category, or quote_content
 @api_view(['GET'])
 def search_quotes(request):
     try:
@@ -50,7 +59,7 @@ def search_quotes(request):
         if not (author or category or quote_content):
             return Response({'error message': 'Missing search query parameter'}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Filter quotes by content, author, and category
+        # Filter quotes by quote_content, author, and category
         if quote_content:
             quotes = quotes.filter(quote__icontains=quote_content)
         if author:
