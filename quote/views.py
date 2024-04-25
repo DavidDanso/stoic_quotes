@@ -5,6 +5,11 @@ from rest_framework import status
 from .models import Quote
 from .serializers import QuoteSerializer
 
+#
+class QuoteCreateView(CreateAPIView):
+    serializer_class = QuoteSerializer
+    queryset = Quote.objects.all()
+
 
 # API Endpoints
 @api_view(['GET'])
@@ -13,18 +18,12 @@ def endpoints(request):
         "endpoints" : [
             {"url": 'quotes/', "description": "Retrieve all quotes."},
             {"url": 'random/', "description": "Retrieve a random quote."},
-            {"url": 'quotes/search?category=category name/', "description": "Search quotes by category."},
-            {"url": 'quotes/search?quote=quote title/', "description": "Search quotes by title."},
-            {"url": 'quotes/search?author=author name/', "description": "Search quotes by author."},
+            {"url": 'search?category=category name', "description": "Search quotes by category."},
+            {"url": 'search?quote=quote title', "description": "Search quotes by title."},
+            {"url": 'search?author=author name', "description": "Search quotes by author."},
         ]
     }
-    
     return Response(data)
-
-#
-class QuoteCreateView(CreateAPIView):
-    serializer_class = QuoteSerializer
-    queryset = Quote.objects.all()
 
 
 # Endpoint to get all quotes
