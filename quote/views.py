@@ -5,6 +5,9 @@ from rest_framework import status
 from .models import Quote
 from .serializers import QuoteSerializer
 
+# Base URL for quotes
+BASE_URL = '/quotes/'
+
 #
 class QuoteCreateView(CreateAPIView):
     serializer_class = QuoteSerializer
@@ -17,10 +20,10 @@ def endpoints(request):
     data = {
         "endpoints" : [
             {"url": 'quotes/', "description": "Retrieve all quotes."},
-            {"url": 'random/', "description": "Retrieve a random quote."},
-            {"url": 'search?category=category name', "description": "Search quotes by category."},
-            {"url": 'search?quote=quote title', "description": "Search quotes by title."},
-            {"url": 'search?author=author name', "description": "Search quotes by author."},
+            {"url": 'quotes/random/', "description": "Retrieve a random quote."},
+            {"url": 'quotes/search?category=category name', "description": "Search quotes by category."},
+            {"url": 'quotes/search?quote=quote title', "description": "Search quotes by title."},
+            {"url": 'quotes/search?author=author name', "description": "Search quotes by author."},
         ]
     }
     return Response(data)
@@ -51,8 +54,10 @@ def random_quotes(request):
         quote = Quote.objects.all().order_by('?').first()
         # Serialize the random quote
         serializer = QuoteSerializer(quote)
+        # Include self link for the specific quote
+        data = {"quote": serializer.data, "link": {"self": BASE_URL + str(quote.id) + "/"}}
         # Return response with the random quote
-        return Response(serializer.data)
+        return Response(data)
     except Exception as e:
         # Return error response if any exception occurs
         return Response({'error message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -94,4 +99,18 @@ def search_quotes(request):
         return Response(data)
     except Exception as e:
         # Return error response if any exception occurs
+        return Response({'error message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+@api_view(['GET'])
+def get_quote_detail(request, pk):
+    try:
+        quote = Quote.objects.get(pk=pk)
+        serializer = QuoteSerializer(quote)
+        data = {"quote": serializer.data, "link": {"self": BASE_URL + str(pk) + "/"}}
+        return Response(data)
+    except Quote.DoesNotExist:
+        return Response({'message': 'Quote not found.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
         return Response({'error message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
